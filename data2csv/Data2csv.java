@@ -13,18 +13,20 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author david
  */
-public class Data2csv {
 
-    /**
-     * @param args the command line arguments
-     */
+public class Data2csv 
+{
     public static void main(String[] args) throws IOException, InterruptedException
     {
+    	Logger log = Logger.getLogger(Data2csv.class.getName());
+
         RiotAPI.setAPIKey(args[0]);
         RiotAPI.setRegion(Region.valueOf(args[1]));
         //RiotAPI.printCalls(true);
@@ -34,9 +36,13 @@ public class Data2csv {
         new File("csv_data/summoners/" + summoner.getName() + "/games").mkdirs();
         new File("csv_data/summoners/" + summoner.getName() + "/stats").mkdirs();
         CSVWriter writerGames = new CSVWriter(new FileWriter("csv_data/summoners/" + summoner.getName() + "/games/games.csv"));
+        String[] headerGames  = ("match ID" + "," + "platform ID" + "," + "queue type" + "," + "season" + "," + "time stamp" + "," + "duration" + "," + "winner(side)" + "," + "champ ID" + "," + "lane" + "," + "role" + "," + "win").split(",");
+        writerGames.writeNext(headerGames);
         
         List<MatchReference> matchList = summoner.getMatchList();
         System.out.println("Total ranked games: " + matchList.size());
+
+        int count = 0;
 
         for(MatchReference m: matchList)
         {    
@@ -46,12 +52,26 @@ public class Data2csv {
                 String[] entries = (m.getID() + "," + m.getPlatformID() + ","
                                  + m.getQueueType() + "," + m.getSeason() + "," 
                                  + m.getTimestamp() + "," + match.getDuration() + ","
-                                 + (teams.get(0).getWinner() ? teams.get(0).getSide() : teams.get(1).getSide()) //Returns the side of the winner of the game
-                                 ).split(",");
-                writerGames.writeNext(entries);
-                
+                                 + (teams.get(0).getWinner() ? teams.get(0).getSide() : teams.get(1).getSide()) + "," //Returns the side of the team winner of the game
+                                 + m.getChampionID() + "," + m.getLane() + "," 
+                                 + m.getRole() + "," + "null").split(",");
+
                 List<Participant> participants = match.getParticipants();
                 CSVWriter writerStats = new CSVWriter(new FileWriter("csv_data/summoners/" + summoner.getName() + "/stats/" + m.getID() + "_stats.csv"));
+                String[] headerStats  = ("matchID" + "," + "summonerID" + "," + "team" + "," + "assists" + "," + "deaths" + "," + "doubleKills" + "," 
+                	                  + "firstBloodAssist" + "," + "firstBloodKill" + "," + "firstInhibitorAssist" + "," + "firstInhibitorKill" + "," 
+                	                  + "firstTowerAssist" + "," + "firstTowerKill" + "," + "goldEarned" + "," + "goldSpent" + "," + "inhibitorKills" + "," 
+                	                  + "item0ID" + "," + "item1ID" + "," + "item2ID" + "," + "item3ID" + "," + "item4ID" + "," + "item5ID" + "," + "item6ID" + "," 
+                	                  + "killingSprees" + "," + "kills" + "," + "largestCriticalStrike" + "," + "largestKillingSpree" + "," + "largestMultiKill" + "," 
+                	                  + "level" + "," + "magicDamageDealt" + "," + "magicDamageDealtToChampions" + "," + "magicDamageTaken" + "," + "minionsKilled" + "," 
+                	                  + "neutralMinionsKilled" + "," + "neutralMinionsKilledEnemyJungle" + "," + "neutralMinionsKilledTeamJungle" + "," + "pentaKills" + "," 
+                	                  + "physicalDamageDealt" + "," + "physicalDamageDealtToChampions" + "," + "physicalDamageTaken" + "," + "quadraKills" + "," 
+                	                  + "sightWardsBought" + "," + "teamObjectives" + "," + "totalDamageDealt" + "," + "totalDamageDealtToChampions" + "," 
+                	                  + "totalDamageTaken" + "," + "totalHealing" + "," + "totalTimeCrowdControlDealt" + "," + "totalUnitsHealed" + "," + "towerKills" + "," 
+                	                  + "tripleKills" + "," + "trueDamageDealt" + "," + "trueDamageDealtToChampions" + "," + "trueDamageTaken" + "," + "unrealKills" + "," 
+                	                  + "visionWardsBought" + "," + "wardsKilled" + "," + "wardsPlaced" + "," + "winner").split(",");
+                writerStats.writeNext(headerStats);
+
                 for(Participant p: participants)
                 {
                     try{
@@ -85,45 +105,31 @@ public class Data2csv {
                                           +  stats.getWinner()
                                           ).split(",");
                         writerStats.writeNext(entries2);
+                        if (p.getSummonerID() == summoner.getID())
+                        {
+                            if (stats.getWinner())
+                                entries[entries.length - 1] = "true";
+                            else
+                                entries[entries.length - 1] = "false";
+                        }
                     }catch (APIException ex)
                     {
-                        System.out.println("Stats CSV APIException: " + ex.getMessage());
+                    	//log.log( Level.SEVERE, ex.toString(), ex );
+                        //System.out.println("Stats CSV APIException: " + ex.getMessage());
                     }
                 }
+                writerGames.writeNext(entries);
                 writerStats.close();
-            }catch (APIException ex)
+            }catch (APIException|IllegalArgumentException ex)
             {
-                System.out.println("Games CSV APIException: " + ex.getMessage());
+            	//log.log( Level.SEVERE, ex.toString(), ex );
+                //System.out.println("Games CSV APIException: " + ex.getMessage());
             }
+            count++;
+            System.out.print("Progress: " + (count*100/matchList.size()) + "%" + " - game " + count + "/" + matchList.size() + "\r");
         }
         
         writerGames.close();
+        System.out.println("Progress complete!                                                                           \r");
     }   
 }
-//        int won = 0;
-//        Side side = null;
-
-//        for(MatchReference m: matchList)
-//        {
-//            Match match = m.getMatch();
-//            List<Participant> participants = match.getParticipants();
-//            participants.
-//            for(Participant p: participants)
-//            {
-//                if (summoner == p.getSummoner())
-//                {
-//                    side = p.getTeam();
-//                }
-//            }
-//            List<MatchTeam> teams = match.getTeams();
-//            for(MatchTeam team: teams)
-//            {
-//                if(team.getWinner())
-//                {
-//                    if(side == team.getSide())
-//                    {
-//                        won++;
-//                    }
-//                }
-//            }
-//        }
