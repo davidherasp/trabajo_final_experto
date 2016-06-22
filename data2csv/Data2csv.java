@@ -24,29 +24,31 @@ public class Data2csv
 {
     private static String[] headerGames = 
             ( "matchID" + "," + "platformID" + ","
-            + "queuetype" + "," + "season" + "," + "timestamp" + "," 
+            + "queueType" + "," + "season" + "," + "timestamp" + "," 
             + "duration" + "," + "winner(side)" + "," + "champID" + "," 
             + "lane" + "," + "role" + "," + "kills" + "," + "deaths" + ","
-            + "assists" + "," + "minionskilled" + "," + "gold earned" + ","
+            + "assists" + "," + "minionsKilled" + "," + "goldEarned" + ","
             + "item0ID" + "," + "item1ID" + "," + "item2ID" + "," + "item3ID" + "," + "item4ID" + "," + "item5ID" + "," + "item6ID" + ","
-            + "totaldmgdealttochamps" + "," + "totalccdealt" + "," + "teamobjectives" + ","
+            + "totalDmgDealtToChamps" + "," + "totalCCDealt" + "," 
+            + "wardsPlaced" + "," 
+            + "doubleKills" + "," + "tripleKills" + "," + "quadraKills" + "," +"pentaKills" + ","
             + "win"
             ).split(",");
     
-    private static String[] headerStats  = 
-            ( "matchID" + "," + "summonerID" + "," + "team" + "," + "assists" + "," + "deaths" + "," + "doubleKills" + "," 
-            + "firstBloodAssist" + "," + "firstBloodKill" + "," + "firstInhibitorAssist" + "," + "firstInhibitorKill" + "," 
-            + "firstTowerAssist" + "," + "firstTowerKill" + "," + "goldEarned" + "," + "goldSpent" + "," + "inhibitorKills" + "," 
-            + "item0ID" + "," + "item1ID" + "," + "item2ID" + "," + "item3ID" + "," + "item4ID" + "," + "item5ID" + "," + "item6ID" + "," 
-            + "killingSprees" + "," + "kills" + "," + "largestCriticalStrike" + "," + "largestKillingSpree" + "," + "largestMultiKill" + "," 
-            + "level" + "," + "magicDamageDealt" + "," + "magicDamageDealtToChampions" + "," + "magicDamageTaken" + "," + "minionsKilled" + "," 
-            + "neutralMinionsKilled" + "," + "neutralMinionsKilledEnemyJungle" + "," + "neutralMinionsKilledTeamJungle" + "," + "pentaKills" + "," 
-            + "physicalDamageDealt" + "," + "physicalDamageDealtToChampions" + "," + "physicalDamageTaken" + "," + "quadraKills" + "," 
-            + "sightWardsBought" + "," + "teamObjectives" + "," + "totalDamageDealt" + "," + "totalDamageDealtToChampions" + "," 
-            + "totalDamageTaken" + "," + "totalHealing" + "," + "totalTimeCrowdControlDealt" + "," + "totalUnitsHealed" + "," + "towerKills" + "," 
-            + "tripleKills" + "," + "trueDamageDealt" + "," + "trueDamageDealtToChampions" + "," + "trueDamageTaken" + "," + "unrealKills" + "," 
-            + "visionWardsBought" + "," + "wardsKilled" + "," + "wardsPlaced" + "," + "winner"
-            ).split(",");
+//    private static String[] headerStats  = 
+//            ( "matchID" + "," + "summonerID" + "," + "team" + "," + "assists" + "," + "deaths" + "," + "doubleKills" + "," 
+//            + "firstBloodAssist" + "," + "firstBloodKill" + "," + "firstInhibitorAssist" + "," + "firstInhibitorKill" + "," 
+//            + "firstTowerAssist" + "," + "firstTowerKill" + "," + "goldEarned" + "," + "goldSpent" + "," + "inhibitorKills" + "," 
+//            + "item0ID" + "," + "item1ID" + "," + "item2ID" + "," + "item3ID" + "," + "item4ID" + "," + "item5ID" + "," + "item6ID" + "," 
+//            + "killingSprees" + "," + "kills" + "," + "largestCriticalStrike" + "," + "largestKillingSpree" + "," + "largestMultiKill" + "," 
+//            + "level" + "," + "magicDamageDealt" + "," + "magicDamageDealtToChampions" + "," + "magicDamageTaken" + "," + "minionsKilled" + "," 
+//            + "neutralMinionsKilled" + "," + "neutralMinionsKilledEnemyJungle" + "," + "neutralMinionsKilledTeamJungle" + "," + "pentaKills" + "," 
+//            + "physicalDamageDealt" + "," + "physicalDamageDealtToChampions" + "," + "physicalDamageTaken" + "," + "quadraKills" + "," 
+//            + "sightWardsBought" + "," + "teamObjectives" + "," + "totalDamageDealt" + "," + "totalDamageDealtToChampions" + "," 
+//            + "totalDamageTaken" + "," + "totalHealing" + "," + "totalTimeCrowdControlDealt" + "," + "totalUnitsHealed" + "," + "towerKills" + "," 
+//            + "tripleKills" + "," + "trueDamageDealt" + "," + "trueDamageDealtToChampions" + "," + "trueDamageTaken" + "," + "unrealKills" + "," 
+//            + "visionWardsBought" + "," + "wardsKilled" + "," + "wardsPlaced" + "," + "winner"
+//            ).split(",");
     
     public static void main(String[] args) throws IOException, InterruptedException
     {
@@ -60,14 +62,20 @@ public class Data2csv
         Summoner summoner = RiotAPI.getSummonerByName(args[2]);
         new File("csv_data/summoners/" + summoner.getName() + "/games").mkdirs();
         new File("csv_data/summoners/" + summoner.getName() + "/stats").mkdirs();
+        
         CSVWriter writerGames = new CSVWriter(new FileWriter("csv_data/summoners/" + summoner.getName() + "/games/games.csv"));
-
         writerGames.writeNext(headerGames);
         
         List<MatchReference> matchList = summoner.getMatchList();
         System.out.println("Total ranked games: " + matchList.size());
-
-        int count = 0;
+        
+        int     count = 0;
+        long    kills = 0, deaths = 0, assists = 0, minionsKilled = 0,
+                item0ID = 0, item1ID = 0, item2ID = 0, item3ID = 0, item4ID = 0, item5ID = 0, item6ID = 0,
+                wardsPlaced = 0, doubleKills = 0, 
+                tripleKills = 0, quadraKills = 0, pentaKills = 0,
+                goldEarned = 0, ttlDmgChamps = 0, ttlCCDealt = 0;
+        boolean win = true;
 
         for(MatchReference m: matchList)
         {    
@@ -84,7 +92,6 @@ public class Data2csv
                 {
                     try{
                         ParticipantStats stats = p.getStats();
-
 //                        String[] entries2 = (m.getID() + "," + p.getSummonerID() + ","
 //                                          +  p.getTeam() + "," + stats.getAssists() + ","
 //                                          +  stats.getDeaths() + "," + stats.getDoubleKills() + ","
@@ -114,12 +121,16 @@ public class Data2csv
 //                                          ).split(",");
 //                        writerStats.writeNext(entries2);
                         if (p.getSummonerID() == summoner.getID())
-                        {
-//                            if (stats.getWinner())
-//                                entries[entries.length - 1] = "true";
-//                            else
-//                                entries[entries.length - 1] = "false";
-                            
+                        {  
+                            kills = stats.getKills(); deaths = stats.getDeaths(); assists = stats.getAssists();
+                            minionsKilled = stats.getMinionsKilled(); goldEarned = stats.getGoldEarned();
+                            item0ID = stats.getItem0ID(); item1ID = stats.getItem1ID(); item2ID = stats.getItem2ID();
+                            item3ID = stats.getItem3ID(); item4ID = stats.getItem4ID(); item5ID = stats.getItem5ID();
+                            item6ID = stats.getItem6ID(); ttlDmgChamps = stats.getTotalDamageDealtToChampions();
+                            ttlCCDealt = stats.getTotalTimeCrowdControlDealt();
+                            wardsPlaced = stats.getWardsPlaced(); doubleKills = stats.getDoubleKills();
+                            tripleKills = stats.getTripleKills(); quadraKills = stats.getQuadraKills();
+                            pentaKills = stats.getPentaKills(); win = stats.getWinner();
                         }
                     }catch (APIException ex)
                     {
@@ -135,8 +146,14 @@ public class Data2csv
                         + m.getTimestamp() + "," + match.getDuration() + ","
                         + (teams.get(0).getWinner() ? teams.get(0).getSide() : teams.get(1).getSide()) + "," //Returns the side of the team winner of the game
                         + m.getChampionID() + "," + m.getLane() + "," 
-                        + m.getRole() + "," + "null").split(",");
-                
+                        + m.getRole() + "," + kills + "," + deaths + "," + assists + ","
+                        + minionsKilled + "," + goldEarned + ","
+                        + item0ID + "," + item1ID + "," + item2ID + "," + item3ID + ","
+                        + item4ID + "," + item5ID + "," + item6ID + ","
+                        + ttlDmgChamps + "," + ttlCCDealt + ","
+                        + wardsPlaced + "," + doubleKills + "," + tripleKills + ","
+                        + quadraKills + "," + pentaKills + "," + win
+                        ).split(",");
                 writerGames.writeNext(entries);
 //                writerStats.close();
             }catch (APIException ex)
